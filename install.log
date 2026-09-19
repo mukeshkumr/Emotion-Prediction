@@ -1,0 +1,5 @@
+[notice] A new release of pip is available: 26.1.2 -> 26.2.1
+[notice] To update, run: C:\Python314\python.exe -m pip install --upgrade pip
+ERROR: Invalid requirement: '[project]': Expected package name at the start of dependency specifier
+    [project]
+    ^ (from line 1 of pyproject.toml)
