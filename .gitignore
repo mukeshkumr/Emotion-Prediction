@@ -10,5 +10,12 @@ wheels/
 .venv
 .python-version
 
+# Environment variables
+.env
+
 start_server.py
 changes_happen.md
+THINKING_SUMMARY.md
+test_confidence.py
+
+analysis/

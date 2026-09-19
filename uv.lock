@@ -254,6 +254,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "keras" },
     { name = "numpy" },
+    { name = "python-dotenv" },
     { name = "tensor" },
     { name = "tensorflow" },
     { name = "tokenizer" },
@@ -265,6 +266,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "keras", specifier = ">=3.15.1" },
     { name = "numpy", specifier = ">=2.5.3" },
+    { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "tensor", specifier = ">=0.3.6" },
     { name = "tensorflow", specifier = ">=2.21.0" },
     { name = "tokenizer", specifier = ">=3.6.4" },
@@ -858,6 +860,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/41/29/57f468577d8362986719590a9fbfde4056e4934cf6d711f9a8bac8a60250/pysnmp-7.1.29.tar.gz", hash = "sha256:d0da6726c4d35b1e57027c98e2065928656b0cc5d3ce5a60b3535e1825cc60ee", size = 268583, upload-time = "2026-08-21T03:57:23.32Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a5/75/ee4c64b903786caa9294382bae895ccddb0b05c6f89ea0c8d21bce6dd9b1/pysnmp-7.1.29-py3-none-any.whl", hash = "sha256:6d08124574c474853870f20d728b54335b42fb1e68068bbb486ec077b3d052cf", size = 355548, upload-time = "2026-08-21T03:57:21.091Z" },
+]
+
+[[package]]
+name = "python-dotenv"
+version = "1.2.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6a/53/ed9d74092561d4b01a2ef1349d52cdbc135e526c245f366b089cfca6de49/python_dotenv-1.2.3.tar.gz", hash = "sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35", size = 58945, upload-time = "2026-08-16T16:54:54.067Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0d/17/c5c6b53ddc18f297992099b3d9ec16c855c0ccc83263a21fe4d1c625ec6c/python_dotenv-1.2.3-py3-none-any.whl", hash = "sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9", size = 22780, upload-time = "2026-08-16T16:54:52.473Z" },
 ]
 
 [[package]]

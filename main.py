@@ -4,6 +4,13 @@ os.environ["ABSL_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 
+from ast import List
+from dotenv import load_dotenv
+from database import init_db, save_prediction, get_history, get_history_count, cleanup_old_predictions
+
+init_db()
+
+from typing import List
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 from fastapi.staticfiles import StaticFiles
@@ -15,9 +22,11 @@ from pydantic import BaseModel, Field
 from keras.models import load_model
 import numpy as np
 import pickle
+import string
 import re
 
 
+load_dotenv()
 
 
 """
@@ -29,13 +38,13 @@ D. Emotion Labels
 E. Emotion emojis
 """
 #A. Model Path (BiGRU)
-model_path = "artifacts/BiGRU_Model.keras"
+model_path = os.getenv("MODEL_PATH", "artifacts/BiGRU_Model.keras")
 
 #B. Tokenizer Path
-tokenizer_path = "artifacts/tokenizer.pkl"
+tokenizer_path = os.getenv("TOKENIZER_PATH", "artifacts/tokenizer.pkl")
 
 #C. Max Sequence Length
-max_sequence_length = 50
+max_sequence_length = int(os.getenv("MAX_SEQ_LENGTH", 50))
 
 #D. Emotion Labels
 emotion_labels = ["sadness", "joy", "love", "anger", "fear", "surprise"]
@@ -61,20 +70,33 @@ C. Remove Special Characters and Punctuation. -done
 D. Remove extra spaces -done
 """
 
-def preprocess_text(text: str)->str:
+
+def preprocess_text(text: str) -> str:
     text = text.lower()
-    text = re.sub(r"'","",text)
-    text = re.sub(r"[^a-z0-9\s]"," ", text)
-    text = re.sub(r"\s+", " ",text).strip()
+    text = re.sub(r"'", "", text)  # Remove apostrophes
+    text = re.sub(r"[^a-z0-9\s]", " ", text)  # Remove special chars
+    text = re.sub(r"\s+", " ", text).strip()  # Remove extra spaces
+    
+    # NEW: Remove URLs
+    text = re.sub(r"https?://\S+|www\.\S+", "", text)
+    
+    # NEW: Remove mentions and hashtags
+    text = re.sub(r"@\w+|#\w+", "", text)
+    
+    # NEW: Keep emojis if desired (or remove them)
+    # text = re.sub(r":\w+:", "", text)  # Remove text emojis
+    
     return text
 
 
 """
 3. Request and Response Schemas
 A. Text Input -> Input schema the text sent by user. -done
-B. Prediciton Response -> Output schema the emotion to predict. -done
+B. Prediction Response -> Output schema the emotion to predict. -done
 C. Health Response (Server health check)
 """
+
+
 
 class TextInput(BaseModel):
     text : str = Field(
@@ -94,6 +116,22 @@ class PredictionResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     model_loaded: bool
+
+class PredictionHistoryEntry(BaseModel):
+    id: int
+    text: str
+    predicted_emotion: str
+    confidence: float
+    all_probabilities: dict[str, float] | None = None
+    created_at: str
+
+# class TextsInput(BaseModel):
+#     texts: List[str] = Field(
+#         ...,
+#         min_length=1,
+#         max_length=10,
+#         description="List of sentences to analyze",
+#     )
 
 """
 4. Model Loading and LifeSpan Management
@@ -141,15 +179,34 @@ B. Health Check Endpoint ('/health')
 C. Predict Emotion Endpoint ('/predict')
 """
 
+
+
 #A. Server UI at homepage ('/')
 @app.get('/', include_in_schema=False)
 def server_ui():
     return FileResponse('static/index.html')
 
+@app.get('/v1/models')
+def models():
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "my-model",
+                "object": "model",
+                "owned_by": "local"
+            }
+        ]
+        
+    }
+    
+
 #B. Health Check Endpoint ('/health')
 @app.get('/health', response_model=HealthResponse)
 def health_check():
     return HealthResponse(status="Server is running", model_loaded=bool(dl_model))
+
+
 
 
 #C. Predict Emotion Endpoint ('/predict')
@@ -188,10 +245,55 @@ def predict_emotion(text_input: TextInput):
         label: float(prob) for prob, label in zip(probabilites, emotion_labels)
           
     }
+    
+    MIN_CONFIDENCE = float(os.getenv("MIN_CONFIDENCE", 0.3))
+    if probabilites[top_emotion_index] < MIN_CONFIDENCE:
+       predicted_emotion = "uncertain"
+       confidence = float(probabilites[top_emotion_index])
+    else:
+       predicted_emotion = emotion_labels[top_emotion_index]
+       confidence = float(probabilites[top_emotion_index])
+
+    # Save to prediction history
+    save_prediction(
+        text=text_input.text,
+        predicted_emotion=predicted_emotion,
+        confidence=confidence,
+        all_probabilities=all_probabilites,
+    )
+
+    # Cleanup if history exceeds limit
+    cleanup_old_predictions(max_count=500)
+
 
     return PredictionResponse(
         text = text_input.text,
-        predicted_emotion = emotion_labels[top_emotion_index],
-        confidence = float(probabilites[top_emotion_index]), 
+        predicted_emotion = predicted_emotion,
+        confidence = confidence, 
         all_probabilites = all_probabilites
     )
+
+
+#D. Prediction History Endpoint
+@app.get('/history', response_model=list[PredictionHistoryEntry])
+def prediction_history(
+    limit: int = 50,
+    offset: int = 0,
+):
+    """Retrieve prediction history with pagination."""
+    items = get_history(limit=limit, offset=offset)
+    total = get_history_count()
+    return {"items": items, "total": total}
+
+
+#E. Clear History Endpoint
+@app.delete('/history')
+def clear_history():
+    """Clear all prediction history."""
+    from database import get_connection
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM predictions")
+    conn.commit()
+    conn.close()
+    return {"detail": "History cleared successfully"}
