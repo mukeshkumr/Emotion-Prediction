@@ -6,19 +6,17 @@
 
 ## Table of Contents
 
-- [Emotion Prediction API](#emotion-prediction-api)
-  - [Table of Contents](#table-of-contents)
-  - [Project Overview](#project-overview)
-  - [Features](#features)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Server](#running-the-server)
-    - [`/predict` Response](#predict-response)
-  - [Usage](#usage)
-  - [Project Structure](#project-structure)
-  - [Change History](#change-history)
-  - [Contributing](#contributing)
-  - [License](#license)
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running the Server](#running-the-server)
+- [API Endpoints](#api-endpoints)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Change History](#change-history)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -30,7 +28,17 @@ This project implements a **BiGRU (Bidirectional Gated Recurrent Unit)** neural 
 - `/health` – Health check that confirms server status and model loading.
 - `/predict` – POST endpoint that accepts a text payload and returns the predicted emotion, confidence score, and probability distribution.
 
+**Confidence Threshold:** A minimum confidence threshold of 0.3 is applied to predictions. When the top probability is below 0.3, the predicted emotion is returned as `"uncertain"` with the actual probability value as confidence.
+
 The frontend consists of static HTML/CSS/JS files located in the `static/` directory, providing a simple UI for typing text and receiving emotion predictions.
+
+Text preprocessing includes:
+- Lowercasing
+- Removal of apostrophes
+- Removal of special characters and punctuation
+- Removal of extra spaces
+- **New:** URL removal
+- **New:** Mentions and hashtag stripping
 
 ---
 
@@ -40,7 +48,9 @@ The frontend consists of static HTML/CSS/JS files located in the `static/` direc
 - BiGRU model inference with tokenizer.
 - RESTful API endpoints for health checks and emotion prediction.
 - Web UI for interactive use.
-- Text preprocessing pipeline (lower‑casing, removal of apostrophes, special characters, and extra spaces).
+- Text preprocessing pipeline (lower-casing, removal of apostrophes, special characters, extra spaces, URLs, and mentions/hashtags).
+- Confidence threshold logic (0.3) with "uncertain" fallback.
+- Prediction history saved to SQLite database.
 - Easily extensible data models (`TextInput`, `PredictionResponse`, `HealthResponse`).
 
 ---
@@ -81,7 +91,7 @@ The frontend consists of static HTML/CSS/JS files located in the `static/` direc
    pip install -r pyproject.toml
 
    # Or install individual packages:
-   pip install fastapi uvicorn keras numpy tensorflow
+   pip install fastapi uvicorn keras numpy tensorflow python-dotenv
    ```
 
 4. **Verify the model artifacts:**
@@ -97,6 +107,7 @@ Start the FastAPI development server from the project root (with the virtual env
 
 ```bash
 uvicorn main:app --reload
+```
 
 The server will be available at `http://127.0.0.1:8000`.
 
@@ -131,10 +142,13 @@ The server will be available at `http://127.0.0.1:8000`.
     "sadness": 0.04,
     "anger": 0.01,
     "fear": 0.01,
-    "neutral": 0.01
+    "surprise": 0.01,
+    "love": 0.01
   }
 }
 ```
+
+**Note:** If the top probability is below 0.3, `predicted_emotion` will be `"uncertain"` and `confidence` will contain the actual probability value.
 
 ---
 
@@ -157,24 +171,28 @@ The server will be available at `http://127.0.0.1:8000`.
   # Expected: {"status":"Server is running","model_loaded":true}
   ```
 
+- **Prediction History:** View saved predictions at `http://localhost:8000/history`
+
 ---
 
 ## Project Structure
 
 ```
 Emotion-Prediction/
-├── artifacts/           # Model files (BiGRU_Model.keras, tokenizer.pkl)
-├── main.py              # FastAPI application, models, and endpoints
-├── pyproject.toml       # Project dependencies and configuration
-├── start_server.py      # Helper script to launch the server
-├── static/
-│   ├── index.html       # Web UI entry point
-│   ├── script.js        # Frontend logic
-│   └── style.css        # Styling
-├── changes_happen.md    # Detailed change‑history file
-├── .venv/               # Virtual environment
-├── .gitignore
-└── README.md            # This file
+├ artifacts/           # Model files (BiGRU_Model.keras, tokenizer.pkl)
+├ main.py              # FastAPI application, models, and endpoints
+├ pyproject.toml       # Project dependencies and configuration
+├ start_server.py      # Helper script to launch the server and test health endpoint
+├ database.py          # SQLite prediction history module
+├ changes_happen.md    # Detailed change-history file
+├ file_changes.md      # File-level changes tracking
+├ static/
+│   ├── index.html     # Web UI entry point
+│   ├── script.js      # Frontend logic
+│   └── style.css      # Styling
+├ .venv/               # Virtual environment
+├ .gitignore
+└ README.md            # This file
 ```
 
 ---
@@ -185,10 +203,13 @@ All notable changes to this project are documented in **`changes_happen.md`**. T
 
 - Initial setup and feature implementation.
 - Model filename fix (`BiGRU_Modle.keras` → `BiGRU_Model.keras`).
+- Confidence threshold implementation (0.3, "uncertain" fallback).
+- Enhanced text preprocessing (URL removal, mentions/hashtag stripping).
+- Database/prediction history integration.
 - Dependency installations and environment setup.
 - Any bug fixes, refactors, or additions.
 
-> **Note:** For day‑to‑day development, ensure every file change is also reflected in `changes_happen.md` (or the project‑specific `file_changes.md` if your workflow uses that naming).
+> **Note:** For day-to-day development, ensure every file change is also reflected in `changes_happen.md` (or the project-specific `file_changes.md` if your workflow uses that naming).
 
 ---
 
@@ -201,7 +222,7 @@ All notable changes to this project are documented in **`changes_happen.md`**. T
 5. Push to your fork (`git push origin feature/foo`).
 6. Open a Pull Request.
 
-Please follow the existing code style and ensure all new endpoints or modifications are reflected in the change‑history file.
+Please follow the existing code style and ensure all new endpoints or modifications are reflected in the change-history file.
 
 ---
 
