@@ -1,22 +1,31 @@
 # Emotion Prediction API
 
-**A FastAPI-based web application that uses a BiGRU deep learning model to predict emotions from text input.** The application provides a REST API for emotion prediction and a simple web UI for interacting with the model.
+*A FastAPI-based web application that uses a BiGRU deep learning model to predict emotions from text input. The application provides a REST API for emotion prediction and a simple web UI for interacting with the model.*
 
----
+
+<p align="center">
+  <a href="https://emotion-prediction-22ez.onrender.com/">
+    <img src="https://img.shields.io/badge/Live%20Demo-Visit%20Emotion%20Prediction%20Prediction-1a472a?style=for-the-badge" alt="Live Demo - Visit Emotion Prediction" />
+  </a>
+</p>
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Running the Server](#running-the-server)
-- [API Endpoints](#api-endpoints)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Change History](#change-history)
-- [Contributing](#contributing)
-- [License](#license)
+- [Emotion Prediction API](#emotion-prediction-api)
+  - [Table of Contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+  - [Features](#features)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Server](#running-the-server)
+  - [API Endpoints](#api-endpoints)
+    - [`/predict` Request](#predict-request)
+    - [`/predict` Response](#predict-response)
+  - [Usage](#usage)
+  - [Project Structure](#project-structure)
+  - [Change History](#change-history)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ---
 
